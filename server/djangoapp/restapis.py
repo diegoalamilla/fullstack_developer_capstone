@@ -11,20 +11,28 @@ sentiment_analyzer_url = os.getenv(
     'sentiment_analyzer_url',
     default="http://localhost:5050/")
 
+import requests
+from urllib.parse import urlencode
+
 def get_request(endpoint, **kwargs):
-    params = ""
-    if(kwargs):
-        for key,value in kwargs.items():
-            params=params+key+"="+value+"&"
-    request_url = backend_url+endpoint+"?"+params
-    print("GET from {} ".format(request_url))
     try:
-        # Call get method of requests library with URL and parameters
-        response = requests.get(request_url)
+        # Construcción segura de la URL con parámetros
+        request_url = f"{backend_url}{endpoint}"
+        if kwargs:
+            request_url += "?" + urlencode(kwargs)  # Codifica los parámetros correctamente
+        
+        print(f"GET from {request_url}")
+
+        # Llamada HTTP con manejo de excepciones
+        response = requests.get(request_url, params=kwargs, timeout=10)  # Agregar timeout opcional
+        response.raise_for_status()  # Lanza error si la respuesta no es 2xx
+        
         return response.json()
-    except:
-        # If any error occurs
-        print("Network exception occurred")
+    
+    except requests.exceptions.RequestException as e:
+        print(f"Network exception occurred: {e}")
+        return None  # Devolver None en caso de error
+
 
 
 def analyze_review_sentiments(text):
